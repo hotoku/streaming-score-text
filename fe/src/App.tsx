@@ -10,7 +10,7 @@ function App() {
     const socket = new WebSocket("ws://localhost:8000/ws");
     wsRef.current = socket;
     socket.addEventListener("message", (e) => {
-      setResponse((r) => [...r, e.data]);
+      setResponse((r) => [...r, JSON.parse(e.data).input]);
     });
     return () => socket.close();
   }, []);

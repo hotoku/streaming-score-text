@@ -1,5 +1,10 @@
+import logging
 from fastapi import FastAPI, WebSocket
 from fastapi.staticfiles import StaticFiles
+
+from .stream import stream
+
+LOGGER = logging.getLogger(__name__)
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -8,6 +13,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    while True:
-        data = await websocket.receive_text()
-        await websocket.send_text(f"Message text is: {data}")
+    LOGGER.info("accepts websocket connection")
+    async for data in stream():
+        await websocket.send_json(data)
