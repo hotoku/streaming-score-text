@@ -3,6 +3,10 @@
 
 import uvicorn
 import click
+import json
+
+import requests
+
 from .server import app
 
 
@@ -25,6 +29,17 @@ def server(ctx: click.Context):
                     port=8000, reload=True)
     else:
         uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
+@main.command
+def score():
+    ret = requests.post(
+        "http://localhost:10080/msg",
+        data=json.dumps({
+            "message": "F1きました！"
+        }))
+    obj = json.loads(ret.content.decode())
+    print(obj)
 
 
 if __name__ == "__main__":
