@@ -2,6 +2,6 @@
 
 ## fastapiとreactでwebsockets通信
 
-- [ ] fastapiでシンプルにindex.htmlを返す
-- [ ] fastapiでwebsocketsのechoサーバーを実装
+- [x] fastapiでシンプルにindex.htmlを返す
+- [x] fastapiでwebsocketsのechoサーバーを実装
 - [ ] reactでechoクライアントを実装
