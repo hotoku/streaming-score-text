@@ -4,4 +4,4 @@
 
 - [x] fastapiでシンプルにindex.htmlを返す
 - [x] fastapiでwebsocketsのechoサーバーを実装
-- [ ] reactでechoクライアントを実装
+- [x] reactでechoクライアントを実装
