@@ -1,5 +1,6 @@
 import {
   Box,
+  Button,
   Table,
   TableBody,
   TableCell,
@@ -51,6 +52,32 @@ function App() {
     <Box sx={{ m: 2 }}>
       <Typography variant="h2">Text Score Streaming</Typography>
       {pref.elm}
+      <Button
+        onClick={() => {
+          if (!wsRef.current) return;
+          const socket = wsRef.current;
+          socket.send(
+            JSON.stringify({
+              type: "stop",
+            })
+          );
+        }}
+      >
+        一時停止
+      </Button>
+      <Button
+        onClick={() => {
+          if (!wsRef.current) return;
+          const socket = wsRef.current;
+          socket.send(
+            JSON.stringify({
+              type: "start",
+            })
+          );
+        }}
+      >
+        再開
+      </Button>
       <TableContainer>
         <Table size="small">
           <TableHead>

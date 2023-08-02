@@ -25,7 +25,7 @@ async def stream():
                 ret = await resp.json()
                 yield ret
             n += 1
-            if n == 3:
+            if n == 30:
                 break
         LOGGER.info("sent %s messages", n)
         LOGGER.info("processed all messages")
