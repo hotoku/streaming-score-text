@@ -59,7 +59,7 @@ function App() {
               <TableCell sx={{ minWidth: "3em" }}>分析</TableCell>
               <TableCell sx={{ minWidth: "3em" }}>事実</TableCell>
               <TableCell sx={{ minWidth: "3em" }}>感情</TableCell>
-              <TableCell sx={{ minWidth: "3em" }}>合計</TableCell>
+              <TableCell sx={{ minWidth: "4em" }}>スコア</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
