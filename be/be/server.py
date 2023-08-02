@@ -1,6 +1,7 @@
 import logging
 from fastapi import FastAPI, WebSocket
 from fastapi.staticfiles import StaticFiles
+from websockets.exceptions import ConnectionClosed
 
 from .stream import stream
 
@@ -14,5 +15,8 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     LOGGER.info("accepts websocket connection")
-    async for data in stream():
-        await websocket.send_json(data)
+    try:
+        async for data in stream():
+            await websocket.send_json(data)
+    except ConnectionClosed:
+        LOGGER.info("closing")
