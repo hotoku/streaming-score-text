@@ -92,9 +92,10 @@ function App() {
           <TableBody>
             {response
               .map((r, i) => {
+                const color = r.value > 0 ? "black" : "gray";
                 return (
                   <TableRow key={i}>
-                    <TableCell>{r.input}</TableCell>
+                    <TableCell sx={{ color: color }}>{r.input}</TableCell>
                     <TableCell>{r.scores.analytics.toFixed(2)}</TableCell>
                     <TableCell>{r.scores.fact.toFixed(2)}</TableCell>
                     <TableCell>{r.scores.emotion.toFixed(2)}</TableCell>
