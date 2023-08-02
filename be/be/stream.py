@@ -22,4 +22,5 @@ async def stream():
                                         "message": row["text"]
                                     }) as resp:
                 ret = await resp.json()
+                print(ret)
                 yield ret
