@@ -14,6 +14,7 @@ def read_data() -> pd.DataFrame:
 
 async def stream():
     df = read_data()
+    n = 0
     async with aiohttp.ClientSession() as session:
         for _, row in df.iterrows():
             LOGGER.info("requesting %s", row["ID"])
@@ -22,5 +23,9 @@ async def stream():
                                         "message": row["text"]
                                     }) as resp:
                 ret = await resp.json()
-                print(ret)
                 yield ret
+            n += 1
+            if n == 3:
+                break
+        LOGGER.info("sent %s messages", n)
+        LOGGER.info("processed all messages")
