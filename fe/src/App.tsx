@@ -32,7 +32,10 @@ function App() {
   );
 
   useEffect(() => {
-    const socket = new WebSocket("ws://localhost:10080/ws");
+    const port = process.env.REACT_APP_DEVELOPMENT ? 8000 : 10080;
+    const url = `ws://${window.location.hostname}:${port}/ws`;
+    console.log("url", url);
+    const socket = new WebSocket(url);
     wsRef.current = socket;
     return () => socket.close();
   }, []);

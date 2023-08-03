@@ -1,0 +1,96 @@
+<!DOCTYPE html><html><head>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title></title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" ,="" href="/template/markdown-github.css">
+        <link rel="stylesheet" ,="" href="/template/custom.css">
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/default.min.css">
+        <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js"></script>
+
+        <script>
+         document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] +
+                        ':35730/livereload.js?snipver=1"></' + 'script>')
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.3.0/mermaid.js"></script>
+
+        <script src="/template/load-mathjax.js" async=""></script>
+    </head>
+    <body>
+        <h2 id="本番と開発用のポートなどの差異">本番と開発用のポートなどの差異</h2>
+<p>本番</p>
+<div class="mermaid">flowchart LR
+  subgraph client
+    browser
+    tunnel1
+  end
+
+  subgraph GCP
+    subgraph cloudrun
+      api
+    end
+    subgraph bastion
+      tunnel2
+      nginx
+      app
+    end
+  end
+  browser --&gt;|http://localhost:10080/| tunnel1
+  browser --&gt;|http,ws://localhost:10080/ws| tunnel1
+  tunnel1 --&gt;|ssh:22| tunnel2
+  tunnel2 --&gt;|http://localhost:80/| nginx
+  tunnel2 --&gt;|http,ws://localhost:80/ws| nginx
+  nginx --&gt;|https://run.app:443/msg| api
+  nginx --&gt;|http://localhost:8000/ws| app
+  app --&gt;|http://localhost:80/msg| nginx
+</div>
+<p>開発</p>
+<div class="mermaid">flowchart LR
+  subgraph client
+    browser
+    npm
+    tunnel1
+    app
+  end
+
+  subgraph GCP
+    subgraph cloudrun
+      api
+    end
+    subgraph bastion
+      tunnel2
+      nginx
+    end
+  end
+
+  browser --&gt;|http://localhost:3000| npm
+  browser --&gt;|http,ws://localhost:8000/ws| app
+  app --&gt;|http://localhost:10080/msg| tunnel1
+  tunnel1 --&gt;|ssh:22| tunnel2
+  tunnel2 --&gt;|http://localhost:80/msg| nginx
+  nginx --&gt;|https://run.app:443/msg| api
+</div>
+<h1 id="todo">todo</h1>
+<h2 id="fastapiとreactでwebsockets通信">fastapiとreactでwebsockets通信</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> fastapiでシンプルにindex.htmlを返す</li>
+<li><input checked="" disabled="" type="checkbox"> fastapiでwebsocketsのechoサーバーを実装</li>
+<li><input checked="" disabled="" type="checkbox"> reactでechoクライアントを実装</li>
+</ul>
+<h2 id="スコアapiに通信を開ける">スコアAPIに通信を開ける</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> nginx入れる</li>
+<li><input checked="" disabled="" type="checkbox"> nginx起動</li>
+<li><input checked="" disabled="" type="checkbox"> :80/msgをAPIに転送</li>
+</ul>
+<h2 id="サーバーからの受信を一時停止したい">サーバーからの受信を一時停止したい</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> クライアント→サーバーにstop/startメッセージを送れるようにする</li>
+<li><input checked="" disabled="" type="checkbox"> サーバー側にメッセージを受け取るループを置く必要がある</li>
+<li><input checked="" disabled="" type="checkbox"> メッセージを受け取るループとは別にメッセージを送り続けるループが必要</li>
+<li><input checked="" disabled="" type="checkbox"> メッセージを受け取るループとメッセージを送るループの間でstop/startのシグナルを授受する必要がある</li>
+</ul>
+
+    
+
+</body></html>
