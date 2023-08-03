@@ -29,7 +29,7 @@ function usePreference() {
   const { val: emotion, elm: emotionSlider } = useSlider("感情");
 
   const elm = (
-    <Box sx={{ width: "50%" }}>
+    <Box>
       {analyticsSlider}
       {factSlider}
       {emotionSlider}

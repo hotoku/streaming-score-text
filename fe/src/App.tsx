@@ -10,6 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
+import useLog from "./hooks/useLog";
 import usePreference from "./hooks/usePreference";
 import { ScoreResponse } from "./types";
 
@@ -31,11 +32,16 @@ function App() {
     [pref]
   );
 
+  const { element: logNode, log } = useLog();
+
   useEffect(() => {
     const port = process.env.REACT_APP_DEVELOPMENT ? 8000 : 10080;
     const url = `ws://${window.location.hostname}:${port}/ws`;
-    console.log("url", url);
+    log(`opening websocket connection ${url}`);
     const socket = new WebSocket(url);
+    socket.addEventListener("close", () => {
+      log("websocket connection is closed");
+    });
     wsRef.current = socket;
     return () => socket.close();
   }, []);
@@ -44,6 +50,7 @@ function App() {
     if (!wsRef.current) return;
     const socket = wsRef.current;
     const listner = (e: MessageEvent) => {
+      log(`receive message ${response.length + 1}`);
       const ret: ScoreResponse = JSON.parse(e.data);
       const score = calcScore(ret.scores);
       setResponse((r) => [...r, { ...ret, value: score }]);
@@ -54,33 +61,38 @@ function App() {
   return (
     <Box sx={{ m: 2 }}>
       <Typography variant="h2">Text Score Streaming</Typography>
-      {pref.elm}
-      <Button
-        onClick={() => {
-          if (!wsRef.current) return;
-          const socket = wsRef.current;
-          socket.send(
-            JSON.stringify({
-              type: "stop",
-            })
-          );
-        }}
-      >
-        一時停止
-      </Button>
-      <Button
-        onClick={() => {
-          if (!wsRef.current) return;
-          const socket = wsRef.current;
-          socket.send(
-            JSON.stringify({
-              type: "start",
-            })
-          );
-        }}
-      >
-        再開
-      </Button>
+      <Box sx={{ display: "flex" }}>
+        <Box sx={{ width: "50%" }}>
+          {pref.elm}
+          <Button
+            onClick={() => {
+              if (!wsRef.current) return;
+              const socket = wsRef.current;
+              socket.send(
+                JSON.stringify({
+                  type: "stop",
+                })
+              );
+            }}
+          >
+            一時停止
+          </Button>
+          <Button
+            onClick={() => {
+              if (!wsRef.current) return;
+              const socket = wsRef.current;
+              socket.send(
+                JSON.stringify({
+                  type: "start",
+                })
+              );
+            }}
+          >
+            再開
+          </Button>
+        </Box>
+        <Box sx={{ width: "50%" }}>{logNode}</Box>
+      </Box>
       <TableContainer>
         <Table size="small">
           <TableHead>
