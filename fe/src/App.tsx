@@ -15,7 +15,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import useLog from "./hooks/useLog";
 import useNormalize from "./hooks/useNormalize";
 import usePreference from "./hooks/usePreference";
-import { ScoreResponse } from "./types";
+import { Score, ScoreResponse } from "./types";
 
 function App() {
   const [response, setResponse] = useState<
@@ -46,16 +46,16 @@ function App() {
    * 標準化されたスコアを返す。
    */
   const calcNormalize = useCallback(
-    (obj: { analytics: number; fact: number; emotion: number }) => {
-      const an =
+    (obj: Score): Score => {
+      const analytics =
         (obj.analytics - normalize.analytics.mu) /
         Math.sqrt(normalize.analytics.sigma2);
-      const fa =
+      const fact =
         (obj.fact - normalize.fact.mu) / Math.sqrt(normalize.fact.sigma2);
-      const em =
+      const emotion =
         (obj.emotion - normalize.emotion.mu) /
         Math.sqrt(normalize.emotion.sigma2);
-      return { analytics: an, fact: fa, emotion: em };
+      return { analytics, fact, emotion };
     },
     [normalize]
   );
@@ -63,43 +63,29 @@ function App() {
   /**
    * ユーザーの好みと、標準化されたスコアから、コメントの表示可否を判断する。
    */
-  const showComment = useCallback(
-    (
-      pref: {
-        analytics: number;
-        fact: number;
-        emotion: number;
-      },
-      score: {
-        analytics: number;
-        fact: number;
-        emotion: number;
-      }
-    ): boolean => {
-      /*
+  const showComment = useCallback((pref: Score, score: Score): boolean => {
+    /*
     pref = 0 => false
     pref = 1 => score > 1.5
     pref = 2 => score > 1.0
     pref = 3 => score > 0
      */
-      const func = (p: number, s: number): boolean => {
-        if (p == 0) return false;
-        if (p == 1) return s > 1.5;
-        if (p == 2) return s > 1.0;
-        if (p == 3) return s > 0;
-        throw new Error(`p is invalid: ${p}`);
-      };
-      return (
-        func(pref.analytics, score.analytics) ||
-        func(pref.fact, score.fact) ||
-        func(pref.emotion, score.emotion)
-      );
-    },
-    []
-  );
+    const func = (p: number, s: number): boolean => {
+      if (p == 0) return false;
+      if (p == 1) return s > 1.5;
+      if (p == 2) return s > 1.0;
+      if (p == 3) return s > 0;
+      throw new Error(`p is invalid: ${p}`);
+    };
+    return (
+      func(pref.analytics, score.analytics) ||
+      func(pref.fact, score.fact) ||
+      func(pref.emotion, score.emotion)
+    );
+  }, []);
 
   const updateNormalize = useCallback(
-    (obj: { analytics: number; fact: number; emotion: number }) => {
+    (obj: Score) => {
       normalize.updateAnalytics(obj.analytics);
       normalize.updateFact(obj.fact);
       normalize.updateEmotion(obj.emotion);
