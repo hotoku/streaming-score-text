@@ -23,8 +23,27 @@ function App() {
   const pref = usePreference();
   const normalize = useNormalize();
 
-  const calcScore = useCallback(
-    (obj: { analytics: number; fact: number; emotion: number }) => {
+  const { element: logNode, log } = useLog();
+
+  useEffect(() => {
+    const port = process.env.REACT_APP_DEVELOPMENT ? 8000 : 10080;
+    const url = `ws://${window.location.hostname}:${port}/ws`;
+    // log(`opening websocket connection ${url}`);
+    const socket = new WebSocket(url);
+    // socket.addEventListener("close", () => {
+    //   log("websocket connection is closed");
+    // });
+    wsRef.current = socket;
+    return () => socket.close();
+  }, []);
+
+  useEffect(() => {
+    if (!wsRef.current) return;
+    const calcScore = (obj: {
+      analytics: number;
+      fact: number;
+      emotion: number;
+    }) => {
       const an =
         (obj.analytics - normalize.analytics.mu) /
         Math.sqrt(normalize.analytics.sigma2);
@@ -36,35 +55,18 @@ function App() {
       const score = an * pref.analytics + fa * pref.fact + em * pref.emotion;
 
       return score;
-    },
-    [normalize, pref]
-  );
+    };
 
-  const updateNormalize = useCallback(
-    (obj: { analytics: number; fact: number; emotion: number }) => {
+    const updateNormalize = (obj: {
+      analytics: number;
+      fact: number;
+      emotion: number;
+    }) => {
       normalize.updateAnalytics(obj.analytics);
       normalize.updateFact(obj.fact);
       normalize.updateEmotion(obj.emotion);
-    },
-    [normalize]
-  );
+    };
 
-  const { element: logNode, log } = useLog();
-
-  useEffect(() => {
-    const port = process.env.REACT_APP_DEVELOPMENT ? 8000 : 10080;
-    const url = `ws://${window.location.hostname}:${port}/ws`;
-    log(`opening websocket connection ${url}`);
-    const socket = new WebSocket(url);
-    socket.addEventListener("close", () => {
-      log("websocket connection is closed");
-    });
-    wsRef.current = socket;
-    return () => socket.close();
-  }, [log]);
-
-  useEffect(() => {
-    if (!wsRef.current) return;
     const socket = wsRef.current;
     const listner = (e: MessageEvent) => {
       log(`receive message ${response.length + 1}`);
@@ -75,7 +77,7 @@ function App() {
     };
     socket.addEventListener("message", listner);
     return () => socket.removeEventListener("message", listner);
-  }, [calcScore, updateNormalize, response, log]);
+  }, [response, log, normalize, pref]);
 
   return (
     <Box sx={{ m: 2 }}>
