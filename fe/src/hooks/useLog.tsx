@@ -9,11 +9,14 @@ function useLog() {
 
   const element = (
     <Box component={Card} sx={{ maxHeight: "9em", overflow: "scroll" }}>
-      {(messages.length > numLines ? messages.slice(-numLines) : messages).map(
-        (m) => {
+      <Box sx={{ m: 1 }}>
+        {(messages.length > numLines
+          ? messages.slice(-numLines)
+          : messages
+        ).map((m) => {
           return <div key={m.num}>{m.message}</div>;
-        }
-      )}
+        })}
+      </Box>
     </Box>
   );
 

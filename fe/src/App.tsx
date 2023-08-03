@@ -127,22 +127,47 @@ function App() {
           <TableHead>
             <TableRow>
               <TableCell>テキスト</TableCell>
-              <TableCell sx={{ minWidth: "3em" }}>分析</TableCell>
-              <TableCell sx={{ minWidth: "3em" }}>事実</TableCell>
-              <TableCell sx={{ minWidth: "3em" }}>感情</TableCell>
-              <TableCell sx={{ minWidth: "4em" }}>スコア</TableCell>
+              <TableCell sx={{ minWidth: "6em" }}>分析</TableCell>
+              <TableCell sx={{ minWidth: "6em" }}>事実</TableCell>
+              <TableCell sx={{ minWidth: "6em" }}>感情</TableCell>
+              <TableCell sx={{ minWidth: "5em" }}>スコア</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {response
               .map((r, i) => {
                 const color = r.value > 0 ? "black" : "gray";
+                const norm = calcNormalize(r.scores);
                 return (
                   <TableRow key={i}>
                     <TableCell sx={{ color: color }}>{r.input}</TableCell>
-                    <TableCell>{r.scores.analytics.toFixed(2)}</TableCell>
-                    <TableCell>{r.scores.fact.toFixed(2)}</TableCell>
-                    <TableCell>{r.scores.emotion.toFixed(2)}</TableCell>
+                    <TableCell>
+                      {r.scores.analytics.toFixed(2)} /{" "}
+                      <Box
+                        component="span"
+                        sx={{ color: norm.an > 0 ? "blue" : "black" }}
+                      >
+                        {norm.an.toFixed(2)}
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      {r.scores.fact.toFixed(2)} /{" "}
+                      <Box
+                        component="span"
+                        sx={{ color: norm.fa > 0 ? "blue" : "black" }}
+                      >
+                        {norm.fa.toFixed(2)}
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      {r.scores.emotion.toFixed(2)} /{" "}
+                      <Box
+                        component="span"
+                        sx={{ color: norm.em > 0 ? "blue" : "black" }}
+                      >
+                        {norm.em.toFixed(2)}
+                      </Box>
+                    </TableCell>
                     <TableCell>{r.value.toFixed(2)}</TableCell>
                   </TableRow>
                 );
