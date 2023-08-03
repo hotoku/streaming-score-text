@@ -28,22 +28,17 @@ function App() {
   useEffect(() => {
     const port = process.env.REACT_APP_DEVELOPMENT ? 8000 : 10080;
     const url = `ws://${window.location.hostname}:${port}/ws`;
-    // log(`opening websocket connection ${url}`);
+    log(`opening websocket connection ${url}`);
     const socket = new WebSocket(url);
-    // socket.addEventListener("close", () => {
-    //   log("websocket connection is closed");
-    // });
+    socket.addEventListener("close", () => {
+      log("websocket connection is closed");
+    });
     wsRef.current = socket;
     return () => socket.close();
-  }, []);
+  }, [log]);
 
-  useEffect(() => {
-    if (!wsRef.current) return;
-    const calcScore = (obj: {
-      analytics: number;
-      fact: number;
-      emotion: number;
-    }) => {
+  const calcScore = useCallback(
+    (obj: { analytics: number; fact: number; emotion: number }) => {
       const an =
         (obj.analytics - normalize.analytics.mu) /
         Math.sqrt(normalize.analytics.sigma2);
@@ -55,17 +50,21 @@ function App() {
       const score = an * pref.analytics + fa * pref.fact + em * pref.emotion;
 
       return score;
-    };
+    },
+    [normalize, pref]
+  );
 
-    const updateNormalize = (obj: {
-      analytics: number;
-      fact: number;
-      emotion: number;
-    }) => {
+  const updateNormalize = useCallback(
+    (obj: { analytics: number; fact: number; emotion: number }) => {
       normalize.updateAnalytics(obj.analytics);
       normalize.updateFact(obj.fact);
       normalize.updateEmotion(obj.emotion);
-    };
+    },
+    [normalize]
+  );
+
+  useEffect(() => {
+    if (!wsRef.current) return;
 
     const socket = wsRef.current;
     const listner = (e: MessageEvent) => {
@@ -77,7 +76,7 @@ function App() {
     };
     socket.addEventListener("message", listner);
     return () => socket.removeEventListener("message", listner);
-  }, [response, log, normalize, pref]);
+  }, [response, log, calcScore, updateNormalize]);
 
   return (
     <Box sx={{ m: 2 }}>

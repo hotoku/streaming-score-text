@@ -1,26 +1,29 @@
 import { Box, Card } from "@mui/material";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 function useLog() {
+  const numLines = 7;
   const [messages, setMessages] = useState<{ message: string; num: number }[]>(
     []
   );
 
   const element = (
     <Box component={Card} sx={{ maxHeight: "9em", overflow: "scroll" }}>
-      {messages.map((m) => {
-        return <div key={m.num}>{m.message}</div>;
-      })}
+      {(messages.length > numLines ? messages.slice(-numLines) : messages).map(
+        (m) => {
+          return <div key={m.num}>{m.message}</div>;
+        }
+      )}
     </Box>
   );
 
-  const log = (msg: string) => {
+  const log = useCallback((msg: string) => {
     setMessages((ms) => {
       const num = ms.length > 0 ? ms.slice(-1)[0].num : 0;
       const ret = [...ms, { message: msg, num: num + 1 }];
-      return ret.length >= 7 ? ret.slice(-7) : ret;
+      return ret;
     });
-  };
+  }, []);
 
   return { element, log };
 }
