@@ -36,7 +36,7 @@ function App() {
     return () => socket.close();
   }, [log]);
 
-  const calcScore = useCallback(
+  const calcNormalize = useCallback(
     (obj: { analytics: number; fact: number; emotion: number }) => {
       const an =
         (obj.analytics - normalize.analytics.mu) /
@@ -46,11 +46,19 @@ function App() {
       const em =
         (obj.emotion - normalize.emotion.mu) /
         Math.sqrt(normalize.emotion.sigma2);
+      return { an, fa, em };
+    },
+    [normalize]
+  );
+
+  const calcScore = useCallback(
+    (obj: { analytics: number; fact: number; emotion: number }) => {
+      const { an, fa, em } = calcNormalize(obj);
       const score = an * pref.analytics + fa * pref.fact + em * pref.emotion;
 
       return score;
     },
-    [normalize, pref]
+    [calcNormalize, pref]
   );
 
   const updateNormalize = useCallback(
