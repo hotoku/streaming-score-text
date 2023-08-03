@@ -32,7 +32,7 @@ function App() {
   );
 
   useEffect(() => {
-    const socket = new WebSocket("ws://localhost:8000/ws");
+    const socket = new WebSocket("ws://localhost:10080/ws");
     wsRef.current = socket;
     return () => socket.close();
   }, []);

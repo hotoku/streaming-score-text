@@ -18,7 +18,7 @@ async def stream():
     async with aiohttp.ClientSession() as session:
         for _, row in df.iterrows():
             LOGGER.info("requesting %s", row["ID"])
-            async with session.post("http://localhost:10080/msg",
+            async with session.post("http://localhost:80/msg",
                                     json={
                                         "message": row["text"]
                                     }) as resp:
