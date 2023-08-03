@@ -9,6 +9,11 @@ function useSlider(name: string) {
         {name}
       </Typography>
       <Slider
+        defaultValue={1}
+        step={1}
+        min={0}
+        max={3}
+        marks
         value={val}
         onChange={(_event, newValue) => {
           console.log("slider", name, newValue);

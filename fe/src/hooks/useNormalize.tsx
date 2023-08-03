@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 function useNormalize1(): [
   { mu: number; sigma2: number },
@@ -14,7 +14,7 @@ function useNormalize1(): [
     n: 0,
   });
 
-  const update = (x: number) => {
+  const update = useCallback((x: number) => {
     setVals((v) => {
       const { mu, sigma2, n } = v;
       const mu_ = (n * mu + x) / (1 + n);
@@ -24,7 +24,7 @@ function useNormalize1(): [
         n: n + 1,
       };
     });
-  };
+  }, []);
 
   return [{ mu: vals.mu, sigma2: vals.sigma2 }, update];
 }

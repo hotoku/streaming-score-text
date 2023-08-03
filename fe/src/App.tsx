@@ -1,6 +1,8 @@
 import {
   Box,
   Button,
+  FormControlLabel,
+  Switch,
   Table,
   TableBody,
   TableCell,
@@ -23,6 +25,7 @@ function App() {
   const pref = usePreference();
   const normalize = useNormalize();
   const { element: logNode, log } = useLog();
+  const [showAll, setShowAll] = useState(true);
 
   useEffect(() => {
     const port = process.env.REACT_APP_DEVELOPMENT ? 8000 : 10080;
@@ -75,21 +78,31 @@ function App() {
 
     const socket = wsRef.current;
     const listner = (e: MessageEvent) => {
-      log(`receive message ${response.length + 1}`);
       const ret: ScoreResponse = JSON.parse(e.data);
       updateNormalize(ret.scores);
+      const norm = {
+        emotion: normalize.emotion.mu,
+        fact: normalize.fact.mu,
+        analytics: normalize.analytics.mu,
+      };
       const score = calcScore(ret.scores);
+      log(
+        `receive message ${response.length + 1}: ` +
+          `${norm.analytics.toFixed(3)}, ` +
+          `${norm.fact.toFixed(3)}, ` +
+          `${norm.emotion.toFixed(3)}`
+      );
       setResponse((r) => [...r, { ...ret, value: score }]);
     };
     socket.addEventListener("message", listner);
     return () => socket.removeEventListener("message", listner);
-  }, [response, log, calcScore, updateNormalize]);
+  }, [response, log, calcScore, updateNormalize, normalize]);
 
   return (
     <Box sx={{ m: 2 }}>
       <Typography variant="h2">Text Score Streaming</Typography>
       <Box sx={{ display: "flex" }}>
-        <Box sx={{ width: "50%" }}>
+        <Box sx={{ width: "30%" }}>
           {pref.elm}
           <Button
             onClick={() => {
@@ -119,8 +132,19 @@ function App() {
           >
             再開
           </Button>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={showAll}
+                onChange={(e) => {
+                  setShowAll(e.target.checked);
+                }}
+              />
+            }
+            label="すべて表示"
+          />
         </Box>
-        <Box sx={{ width: "50%" }}>{logNode}</Box>
+        <Box sx={{ width: "70%" }}>{logNode}</Box>
       </Box>
       <TableContainer>
         <Table size="small">
@@ -136,6 +160,7 @@ function App() {
           <TableBody>
             {response
               .map((r, i) => {
+                if (!showAll && r.value <= 0) return undefined;
                 const color = r.value > 0 ? "black" : "gray";
                 const norm = calcNormalize(r.scores);
                 return (
