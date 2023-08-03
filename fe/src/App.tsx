@@ -22,7 +22,6 @@ function App() {
   const wsRef = useRef<WebSocket>();
   const pref = usePreference();
   const normalize = useNormalize();
-
   const { element: logNode, log } = useLog();
 
   useEffect(() => {
