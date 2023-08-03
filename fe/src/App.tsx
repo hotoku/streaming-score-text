@@ -19,7 +19,7 @@ import { ScoreResponse } from "./types";
 
 function App() {
   const [response, setResponse] = useState<
-    (ScoreResponse & { value: number })[]
+    (ScoreResponse & { show: boolean })[]
   >([]);
   const wsRef = useRef<WebSocket>();
   const pref = usePreference();
@@ -27,6 +27,9 @@ function App() {
   const { element: logNode, log } = useLog();
   const [showAll, setShowAll] = useState(true);
 
+  /**
+   * マウント時に、WebSocketの接続を開く。
+   */
   useEffect(() => {
     const port = process.env.REACT_APP_DEVELOPMENT ? 8000 : 10080;
     const url = `ws://${window.location.hostname}:${port}/ws`;
@@ -39,6 +42,9 @@ function App() {
     return () => socket.close();
   }, [log]);
 
+  /**
+   * 標準化されたスコアを返す。
+   */
   const calcNormalize = useCallback(
     (obj: { analytics: number; fact: number; emotion: number }) => {
       const an =
@@ -49,19 +55,47 @@ function App() {
       const em =
         (obj.emotion - normalize.emotion.mu) /
         Math.sqrt(normalize.emotion.sigma2);
-      return { an, fa, em };
+      return { analytics: an, fact: fa, emotion: em };
     },
     [normalize]
   );
 
-  const calcScore = useCallback(
-    (obj: { analytics: number; fact: number; emotion: number }) => {
-      const { an, fa, em } = calcNormalize(obj);
-      const score = an * pref.analytics + fa * pref.fact + em * pref.emotion;
-
-      return score;
+  /**
+   * ユーザーの好みと、標準化されたスコアから、コメントの表示可否を判断する。
+   */
+  const showComment = useCallback(
+    (
+      pref: {
+        analytics: number;
+        fact: number;
+        emotion: number;
+      },
+      score: {
+        analytics: number;
+        fact: number;
+        emotion: number;
+      }
+    ): boolean => {
+      /*
+    pref = 0 => false
+    pref = 1 => score > 1.5
+    pref = 2 => score > 1.0
+    pref = 3 => score > 0
+     */
+      const func = (p: number, s: number): boolean => {
+        if (p == 0) return false;
+        if (p == 1) return s > 1.5;
+        if (p == 2) return s > 1.0;
+        if (p == 3) return s > 0;
+        throw new Error(`p is invalid: ${p}`);
+      };
+      return (
+        func(pref.analytics, score.analytics) ||
+        func(pref.fact, score.fact) ||
+        func(pref.emotion, score.emotion)
+      );
     },
-    [calcNormalize, pref]
+    []
   );
 
   const updateNormalize = useCallback(
@@ -75,28 +109,23 @@ function App() {
 
   useEffect(() => {
     if (!wsRef.current) return;
-
     const socket = wsRef.current;
     const listner = (e: MessageEvent) => {
       const ret: ScoreResponse = JSON.parse(e.data);
       updateNormalize(ret.scores);
-      const norm = {
-        emotion: normalize.emotion.mu,
-        fact: normalize.fact.mu,
-        analytics: normalize.analytics.mu,
-      };
-      const score = calcScore(ret.scores);
+      const normScore = calcNormalize(ret.scores);
+      const show = showComment(pref, normScore);
       log(
         `receive message ${response.length + 1}: ` +
-          `${norm.analytics.toFixed(3)}, ` +
-          `${norm.fact.toFixed(3)}, ` +
-          `${norm.emotion.toFixed(3)}`
+          `${normalize.analytics.mu.toFixed(3)}, ` +
+          `${normalize.fact.mu.toFixed(3)}, ` +
+          `${normalize.emotion.mu.toFixed(3)}, `
       );
-      setResponse((r) => [...r, { ...ret, value: score }]);
+      setResponse((r) => [...r, { ...ret, show: show }]);
     };
     socket.addEventListener("message", listner);
     return () => socket.removeEventListener("message", listner);
-  }, [response, log, calcScore, updateNormalize, normalize]);
+  }, [response, log, showComment, updateNormalize, normalize]);
 
   return (
     <Box sx={{ m: 2 }}>
@@ -154,14 +183,13 @@ function App() {
               <TableCell sx={{ minWidth: "6em" }}>分析</TableCell>
               <TableCell sx={{ minWidth: "6em" }}>事実</TableCell>
               <TableCell sx={{ minWidth: "6em" }}>感情</TableCell>
-              <TableCell sx={{ minWidth: "5em" }}>スコア</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {response
               .map((r, i) => {
-                if (!showAll && r.value <= 0) return undefined;
-                const color = r.value > 0 ? "black" : "gray";
+                if (!showAll && !r.show) return undefined;
+                const color = r.show ? "black" : "gray";
                 const norm = calcNormalize(r.scores);
                 return (
                   <TableRow key={i}>
@@ -170,30 +198,29 @@ function App() {
                       {r.scores.analytics.toFixed(2)} /{" "}
                       <Box
                         component="span"
-                        sx={{ color: norm.an > 0 ? "blue" : "black" }}
+                        sx={{ color: norm.analytics > 0 ? "blue" : "black" }}
                       >
-                        {norm.an.toFixed(2)}
+                        {norm.analytics.toFixed(2)}
                       </Box>
                     </TableCell>
                     <TableCell>
                       {r.scores.fact.toFixed(2)} /{" "}
                       <Box
                         component="span"
-                        sx={{ color: norm.fa > 0 ? "blue" : "black" }}
+                        sx={{ color: norm.fact > 0 ? "blue" : "black" }}
                       >
-                        {norm.fa.toFixed(2)}
+                        {norm.fact.toFixed(2)}
                       </Box>
                     </TableCell>
                     <TableCell>
                       {r.scores.emotion.toFixed(2)} /{" "}
                       <Box
                         component="span"
-                        sx={{ color: norm.em > 0 ? "blue" : "black" }}
+                        sx={{ color: norm.emotion > 0 ? "blue" : "black" }}
                       >
-                        {norm.em.toFixed(2)}
+                        {norm.emotion.toFixed(2)}
                       </Box>
                     </TableCell>
-                    <TableCell>{r.value.toFixed(2)}</TableCell>
                   </TableRow>
                 );
               })
