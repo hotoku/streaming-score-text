@@ -7,7 +7,7 @@ function useLog() {
   );
 
   const element = (
-    <Box component={Card} sx={{ maxHeight: "8em", overflow: "scroll" }}>
+    <Box component={Card} sx={{ maxHeight: "9em", overflow: "scroll" }}>
       {messages.map((m) => {
         return <div key={m.num}>{m.message}</div>;
       })}

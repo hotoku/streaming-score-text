@@ -58,6 +58,7 @@ function App() {
     socket.addEventListener("message", listner);
     return () => socket.removeEventListener("message", listner);
   }, [calcScore]);
+
   return (
     <Box sx={{ m: 2 }}>
       <Typography variant="h2">Text Score Streaming</Typography>
@@ -68,6 +69,7 @@ function App() {
             onClick={() => {
               if (!wsRef.current) return;
               const socket = wsRef.current;
+              log("一時停止");
               socket.send(
                 JSON.stringify({
                   type: "stop",
@@ -81,6 +83,7 @@ function App() {
             onClick={() => {
               if (!wsRef.current) return;
               const socket = wsRef.current;
+              log("再開");
               socket.send(
                 JSON.stringify({
                   type: "start",
