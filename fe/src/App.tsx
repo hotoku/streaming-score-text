@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import useLog from "./hooks/useLog";
+import useNormalize from "./hooks/useNormalize";
 import usePreference from "./hooks/usePreference";
 import { ScoreResponse } from "./types";
 
@@ -20,16 +21,32 @@ function App() {
   >([]);
   const wsRef = useRef<WebSocket>();
   const pref = usePreference();
+  const normalize = useNormalize();
+
   const calcScore = useCallback(
     (obj: { analytics: number; fact: number; emotion: number }) => {
-      const score =
-        obj.analytics * pref.analytics +
-        obj.fact * pref.fact +
-        obj.emotion * pref.emotion;
+      const an =
+        (obj.analytics - normalize.analytics.mu) /
+        Math.sqrt(normalize.analytics.sigma2);
+      const fa =
+        (obj.fact - normalize.fact.mu) / Math.sqrt(normalize.fact.sigma2);
+      const em =
+        (obj.emotion - normalize.emotion.mu) /
+        Math.sqrt(normalize.emotion.sigma2);
+      const score = an * pref.analytics + fa * pref.fact + em * pref.emotion;
 
       return score;
     },
-    [pref]
+    [normalize, pref]
+  );
+
+  const updateNormalize = useCallback(
+    (obj: { analytics: number; fact: number; emotion: number }) => {
+      normalize.updateAnalytics(obj.analytics);
+      normalize.updateFact(obj.fact);
+      normalize.updateEmotion(obj.emotion);
+    },
+    [normalize]
   );
 
   const { element: logNode, log } = useLog();
@@ -44,7 +61,7 @@ function App() {
     });
     wsRef.current = socket;
     return () => socket.close();
-  }, []);
+  }, [log]);
 
   useEffect(() => {
     if (!wsRef.current) return;
@@ -52,12 +69,13 @@ function App() {
     const listner = (e: MessageEvent) => {
       log(`receive message ${response.length + 1}`);
       const ret: ScoreResponse = JSON.parse(e.data);
+      updateNormalize(ret.scores);
       const score = calcScore(ret.scores);
       setResponse((r) => [...r, { ...ret, value: score }]);
     };
     socket.addEventListener("message", listner);
     return () => socket.removeEventListener("message", listner);
-  }, [calcScore]);
+  }, [calcScore, updateNormalize, response, log]);
 
   return (
     <Box sx={{ m: 2 }}>
