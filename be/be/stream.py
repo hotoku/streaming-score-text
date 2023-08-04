@@ -5,12 +5,14 @@ import aiohttp
 
 
 LOGGER = logging.getLogger(__name__)
-API_PORT = 80
+API_URL = "http://localhost:10080/msg"
 
 
-def setup(port: int):
-    global API_PORT
-    API_PORT = port
+def setup(production: bool):
+    global API_URL
+    if production:
+        API_URL = "https://tstr.inctore.com/msg"
+    LOGGER.info("stream setup: %s", API_URL)
 
 
 def read_data() -> pd.DataFrame:
@@ -24,10 +26,10 @@ async def stream():
     async with aiohttp.ClientSession() as session:
         for _, row in df.iterrows():
             LOGGER.info("requesting %s", row["ID"])
-            async with session.post(f"http://localhost:{API_PORT}/msg",
-                                    json={
-                                        "message": row["text"]
-                                    }) as resp:
+            payload = {
+                "message": row["text"]
+            }
+            async with session.post(API_URL, json=payload) as resp:
                 ret = await resp.json()
                 yield ret
             n += 1

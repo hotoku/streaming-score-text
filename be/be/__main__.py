@@ -29,12 +29,12 @@ def main(ctx: click.Context, debug: bool):
 
 
 @main.command
-@click.option("--port", type=int, default=80)
+@click.option("--production/--no-production", is_flag=True, default=False)
 @click.pass_context
-def server(ctx: click.Context, port: int):
+def server(ctx: click.Context, production: bool):
     LOGGER.info("start server. "
                 "debug: %s", ctx.obj["debug"])
-    stream.setup(port)
+    stream.setup(production)
     if ctx.obj["debug"]:
         # reloadするときは、文字列でappへの参照を渡す必要がある
         # cf: https://github.com/tiangolo/fastapi/issues/1495#issuecomment-635681976

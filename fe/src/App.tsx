@@ -31,8 +31,9 @@ function App() {
    * マウント時に、WebSocketの接続を開く。
    */
   useEffect(() => {
-    const port = process.env.REACT_APP_DEVELOPMENT ? 8000 : 10080;
-    const url = `ws://${window.location.hostname}:${port}/ws`;
+    const protocol = process.env.REACT_APP_DEVELOPMENT ? "ws" : "wss";
+    const port = process.env.REACT_APP_DEVELOPMENT ? 8000 : 443;
+    const url = `${protocol}://${window.location.hostname}:${port}/ws`;
     log(`opening websocket connection ${url}`);
     const socket = new WebSocket(url);
     socket.addEventListener("close", () => {
