@@ -106,7 +106,8 @@ function App() {
         `receive message ${response.length + 1}: ` +
           `${normScore.analytics.toFixed(2)}, ` +
           `${normScore.fact.toFixed(2)}, ` +
-          `${normScore.emotion.toFixed(2)}, `
+          `${normScore.emotion.toFixed(2)}, ` +
+          `${show ? "show" : "no show"}`
       );
       setResponse((r) => [...r, { ...ret, normalized: normScore, show: show }]);
     };
