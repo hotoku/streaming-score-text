@@ -1,4 +1,27 @@
+# ストリームのリファクタ
+
+- データソースから読む
+- テキストをAPIに投げる
+- 結果をyieldする
+
+のを、別のworkerにして非同期で処理したい
+
+```mermaid
+sequenceDiagram
+  Reader ->> RawTextQueue: await put, text
+  Scorer ->> RawTextQueue: await get
+  RawTextQueue ->> Scorer: text
+  Scorer ->> API: HTTPリクエスト, text
+  API ->> Scorer: レスポンス, text, score
+  Scorer ->> ScoreQueue: await put, text, score
+```
+
+todo: RawTextQueueとScoreQueueで、終わったことは、どうやって検知するか考える
+
 ## 本番と開発用のポートなどの差異
+
+※ ここの流れは、だいぶ変えたあとに編集してない。
+同じ図が必要になった場合は、実装を確認して変更する必要がある。
 
 本番
 
