@@ -19,7 +19,7 @@ import { Score, ScoreResponse } from "./types";
 
 function App() {
   const [response, setResponse] = useState<
-    (ScoreResponse & { show: boolean })[]
+    (ScoreResponse & { normalized: Score; show: boolean })[]
   >([]);
   const wsRef = useRef<WebSocket>();
   const pref = usePreference();
@@ -64,11 +64,11 @@ function App() {
    * ユーザーの好みと、標準化されたスコアから、コメントの表示可否を判断する。
    */
   const showComment = useCallback((pref: Score, score: Score): boolean => {
-    /*
-    pref = 0 => false
-    pref = 1 => score > 1.5
-    pref = 2 => score > 1.0
-    pref = 3 => score > 0
+    /**
+     * pref = 0 => false
+     * pref = 1 => score > 1.5
+     * pref = 2 => score > 1.0
+     * pref = 3 => score > 0
      */
     const func = (p: number, s: number): boolean => {
       if (p == 0) return false;
@@ -103,11 +103,11 @@ function App() {
       const show = showComment(pref, normScore);
       log(
         `receive message ${response.length + 1}: ` +
-          `${normalize.analytics.mu.toFixed(3)}, ` +
-          `${normalize.fact.mu.toFixed(3)}, ` +
-          `${normalize.emotion.mu.toFixed(3)}, `
+          `${normScore.analytics.toFixed(2)}, ` +
+          `${normScore.fact.toFixed(2)}, ` +
+          `${normScore.emotion.toFixed(2)}, `
       );
-      setResponse((r) => [...r, { ...ret, show: show }]);
+      setResponse((r) => [...r, { ...ret, normalized: normScore, show: show }]);
     };
     socket.addEventListener("message", listner);
     return () => socket.removeEventListener("message", listner);
@@ -147,6 +147,21 @@ function App() {
           >
             再開
           </Button>
+          <Button
+            onClick={() => {
+              if (!wsRef.current) return;
+              const socket = wsRef.current;
+              log("最初から");
+              setResponse([]);
+              socket.send(
+                JSON.stringify({
+                  type: "restart",
+                })
+              );
+            }}
+          >
+            最初から
+          </Button>
           <FormControlLabel
             control={
               <Switch
@@ -176,7 +191,7 @@ function App() {
               .map((r, i) => {
                 if (!showAll && !r.show) return undefined;
                 const color = r.show ? "black" : "gray";
-                const norm = calcNormalize(r.scores);
+                const norm = r.normalized;
                 return (
                   <TableRow key={i}>
                     <TableCell sx={{ color: color }}>{r.input}</TableCell>
