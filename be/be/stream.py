@@ -11,7 +11,7 @@ API_URL = "http://localhost:10080/msg"
 def setup(production: bool):
     global API_URL
     if production:
-        API_URL = "https://tstr.inctore.com/msg"
+        API_URL = "https://text-score-hvi4fczdoa-an.a.run.app/msg"
     LOGGER.info("stream setup: %s", API_URL)
 
 
