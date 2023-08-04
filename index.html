@@ -10,14 +10,32 @@
 
         <script>
          document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] +
-                        ':35730/livereload.js?snipver=1"></' + 'script>')
+                        ':35731/livereload.js?snipver=1"></' + 'script>')
         </script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.3.0/mermaid.js"></script>
 
         <script src="/template/load-mathjax.js" async=""></script>
     </head>
     <body>
-        <h2 id="本番と開発用のポートなどの差異">本番と開発用のポートなどの差異</h2>
+        <h1 id="ストリームのリファクタ">ストリームのリファクタ</h1>
+<ul>
+<li>データソースから読む</li>
+<li>テキストをAPIに投げる</li>
+<li>結果をyieldする</li>
+</ul>
+<p>のを、別のworkerにして非同期で処理したい</p>
+<div class="mermaid">sequenceDiagram
+  Reader -&gt;&gt; RawTextQueue: await put, text
+  Scorer -&gt;&gt; RawTextQueue: await get
+  RawTextQueue -&gt;&gt; Scorer: text
+  Scorer -&gt;&gt; API: HTTPリクエスト, text
+  API -&gt;&gt; Scorer: レスポンス, text, score
+  Scorer -&gt;&gt; ScoreQueue: await put, text, score
+</div>
+<p>todo: RawTextQueueとScoreQueueで、終わったことは、どうやって検知するか考える</p>
+<h2 id="本番と開発用のポートなどの差異">本番と開発用のポートなどの差異</h2>
+<p>※ ここの流れは、だいぶ変えたあとに編集してない。
+同じ図が必要になった場合は、実装を確認して変更する必要がある。</p>
 <p>本番</p>
 <div class="mermaid">flowchart LR
   subgraph client

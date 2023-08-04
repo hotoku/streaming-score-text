@@ -46,18 +46,17 @@ def server(ctx: click.Context, production: bool):
         uvicorn.run(app, host="0.0.0.0", port=8000)
 
 
-async def call():
-    async with aiohttp.ClientSession() as session:
-        payload = {
-            "message": "F1きました"
-        }
-        async with session.post(stream.API_URL, json=payload) as resp:
-            ret = await resp.json()
-            print(ret)
-
-
 @main.command
 def api():
+    async def call():
+        async with aiohttp.ClientSession() as session:
+            payload = {
+                "message": "F1きました"
+            }
+            async with session.post(stream.API_URL, json=payload) as resp:
+                ret = await resp.json()
+                print(ret)
+
     stream.setup(production=True)
     asyncio.run(call())
 
