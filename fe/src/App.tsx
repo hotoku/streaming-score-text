@@ -25,7 +25,7 @@ function App() {
   const pref = usePreference();
   const normalize = useNormalize();
   const { element: logNode, log } = useLog();
-  const [showAll, setShowAll] = useState(true);
+  const [showAll, setShowAll] = useState(false);
 
   /**
    * マウント時に、WebSocketの接続を開く。
