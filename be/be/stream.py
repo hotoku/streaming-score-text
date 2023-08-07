@@ -4,7 +4,7 @@ import logging
 
 import pandas as pd
 import aiohttp
-
+from openpyxl import load_workbook
 
 from .types import Comment, Score, ScoreComment
 from .cache import acache
@@ -43,14 +43,50 @@ def read_data0() -> pd.DataFrame:
     return df
 
 
+def read_data1() -> pd.DataFrame:
+    wb = load_workbook("data/20230803-yt_chat_annotation.xlsx")
+    ws = wb.worksheets[0]
+    n = ws.max_row
+    time = [
+        ws.cell(i, 2).value
+        for i in range(2, n + 1)
+    ]
+    text = [
+        ws.cell(i, 5).value
+        for i in range(2, n + 1)
+    ]
+    return (
+        pd
+        .DataFrame({
+            "created_at": time,
+            "text": text
+        })
+        .sort_values("created_at")
+        .assign(
+            created_at=lambda df: [
+                datetime.strptime(x, "%Y-%m-%d %H:%M:%S")
+                for x in df["created_at"]
+            ],
+            diff=lambda df: [
+                x.seconds
+                for x in (df["created_at"] - df["created_at"].iloc[0])
+            ]
+        )
+    )
+
+
 async def read_data(text_queue: asyncio.Queue[Comment]):
-    df = read_data0()
+    # df = read_data0()
+    df = read_data1()
     last_diff = 0
     for i, row in df.iterrows():
-        LOGGER.info("reading %s", i)
         obj = Comment(time=row["created_at"], text=row["text"])  # type: ignore
         await text_queue.put(obj)
-        await asyncio.sleep(row["diff"] - last_diff)
+        LOGGER.info("put %s", obj)
+        diff = row["diff"] - last_diff
+        LOGGER.info("sleeping %s", diff)
+        await asyncio.sleep(diff)
+        last_diff = row["diff"]
 
 
 async def get_score(text_queue: asyncio.Queue[Comment], score_queue: asyncio.Queue[ScoreComment]):
