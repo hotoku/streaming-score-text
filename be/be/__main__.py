@@ -4,12 +4,14 @@ import asyncio
 import logging
 import aiohttp
 
+
 import uvicorn
 import click
 
 
 from .server import app
 from . import stream
+from . import cache
 
 LOGGER = logging.getLogger(__name__)
 
@@ -47,7 +49,8 @@ def server(ctx: click.Context, production: bool):
 
 
 @main.command
-def api():
+@click.option("--production/--no-production", is_flag=True, default=False)
+def api(production: bool):
     async def call():
         async with aiohttp.ClientSession() as session:
             payload = {
@@ -56,9 +59,13 @@ def api():
             async with session.post(stream.API_URL, json=payload) as resp:
                 ret = await resp.json()
                 print(ret)
-
-    stream.setup(production=True)
+    stream.setup(production)
     asyncio.run(call())
+
+
+@main.command
+def clear_cache():
+    cache.clear()
 
 
 if __name__ == "__main__":

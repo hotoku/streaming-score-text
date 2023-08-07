@@ -1,11 +1,11 @@
 import asyncio
 import logging
-from typing import AsyncGenerator
 from fastapi import FastAPI, WebSocket
 from fastapi.staticfiles import StaticFiles
 from websockets.exceptions import ConnectionClosed
 
-from .stream import stream
+from .types import Comment, ScoreComment
+from .stream import get_score, read_data
 
 LOGGER = logging.getLogger(__name__)
 
@@ -13,12 +13,13 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
-async def send_messages(websocket: WebSocket, stream: AsyncGenerator, event: asyncio.Event):
+async def send_messages(websocket: WebSocket, event: asyncio.Event, score_queue: asyncio.Queue[ScoreComment]):
     n = 0
-    async for data in stream:
-        LOGGER.info("seinding message %s", n)
+    while True:
+        sc = await score_queue.get()
+        LOGGER.info("sending message %s", n)
         n += 1
-        await websocket.send_json(data)
+        await websocket.send_text(sc.model_dump_json())
         await event.wait()
 
 
@@ -26,10 +27,16 @@ async def send_messages(websocket: WebSocket, stream: AsyncGenerator, event: asy
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     LOGGER.info("accepts websocket connection")
-    st = stream()
+    text_queue = asyncio.Queue[Comment]()
+    score_queue = asyncio.Queue[ScoreComment]()
+
     event = asyncio.Event()
     event.set()
-    send_task = asyncio.create_task(send_messages(websocket, st, event))
+
+    rd = asyncio.create_task(read_data(text_queue))
+    gs = asyncio.create_task(get_score(text_queue, score_queue))
+    sm = asyncio.create_task(send_messages(websocket, event, score_queue))
+
     try:
         while True:
             message = await websocket.receive_json()
@@ -41,14 +48,16 @@ async def websocket_endpoint(websocket: WebSocket):
                 event.set()
             elif message["type"] == "restart":
                 LOGGER.info("received restart signal. cancelling old task.")
-                cancelled = send_task.cancel()
-                LOGGER.info("cancelled %s", cancelled)
-                st = stream()
-                send_task = asyncio.create_task(
-                    send_messages(websocket, st, event))
+                # cancelled = send_task.cancel()
+                # LOGGER.info("cancelled %s", cancelled)
+                # st = stream()
+                # send_task = asyncio.create_task(
+                #     send_messages(websocket, st, event))
             else:
                 LOGGER.warning("unknown message type:", message["type"])
 
     except ConnectionClosed:
         LOGGER.info("closing")
-        send_task.cancel()
+        rd.cancel()
+        gs.cancel()
+        sm.cancel()

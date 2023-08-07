@@ -15,11 +15,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import useLog from "./hooks/useLog";
 import useNormalize from "./hooks/useNormalize";
 import usePreference from "./hooks/usePreference";
-import { Score, ScoreResponse } from "./types";
+import { Score, ScoreComment } from "./types";
 
 function App() {
   const [response, setResponse] = useState<
-    (ScoreResponse & { normalized: Score; show: boolean })[]
+    (ScoreComment & { normalized: Score; show: boolean })[]
   >([]);
   const wsRef = useRef<WebSocket>();
   const pref = usePreference();
@@ -72,10 +72,10 @@ function App() {
      * pref = 3 => score > 0
      */
     const func = (p: number, s: number): boolean => {
-      if (p == 0) return false;
-      if (p == 1) return s > 1.5;
-      if (p == 2) return s > 1.0;
-      if (p == 3) return s > 0;
+      if (p === 0) return false;
+      if (p === 1) return s > 1.5;
+      if (p === 2) return s > 1.0;
+      if (p === 3) return s > 0;
       throw new Error(`p is invalid: ${p}`);
     };
     return (
@@ -98,9 +98,9 @@ function App() {
     if (!wsRef.current) return;
     const socket = wsRef.current;
     const listner = (e: MessageEvent) => {
-      const ret: ScoreResponse = JSON.parse(e.data);
-      updateNormalize(ret.scores);
-      const normScore = calcNormalize(ret.scores);
+      const ret: ScoreComment = JSON.parse(e.data);
+      updateNormalize(ret.score);
+      const normScore = calcNormalize(ret.score);
       const show = showComment(pref, normScore);
       log(
         `receive message ${response.length + 1}: ` +
@@ -113,7 +113,7 @@ function App() {
     };
     socket.addEventListener("message", listner);
     return () => socket.removeEventListener("message", listner);
-  }, [response, log, showComment, updateNormalize, normalize]);
+  }, [response, log, showComment, updateNormalize, calcNormalize, pref]);
 
   return (
     <Box sx={{ m: 2 }}>
@@ -196,9 +196,11 @@ function App() {
                 const norm = r.normalized;
                 return (
                   <TableRow key={i}>
-                    <TableCell sx={{ color: color }}>{r.input}</TableCell>
+                    <TableCell sx={{ color: color }}>
+                      {r.comment.text}
+                    </TableCell>
                     <TableCell>
-                      {r.scores.analytics.toFixed(2)} /{" "}
+                      {r.score.analytics.toFixed(2)} /{" "}
                       <Box
                         component="span"
                         sx={{ color: norm.analytics > 0 ? "blue" : "black" }}
@@ -207,7 +209,7 @@ function App() {
                       </Box>
                     </TableCell>
                     <TableCell>
-                      {r.scores.fact.toFixed(2)} /{" "}
+                      {r.score.fact.toFixed(2)} /{" "}
                       <Box
                         component="span"
                         sx={{ color: norm.fact > 0 ? "blue" : "black" }}
@@ -216,7 +218,7 @@ function App() {
                       </Box>
                     </TableCell>
                     <TableCell>
-                      {r.scores.emotion.toFixed(2)} /{" "}
+                      {r.score.emotion.toFixed(2)} /{" "}
                       <Box
                         component="span"
                         sx={{ color: norm.emotion > 0 ? "blue" : "black" }}

@@ -4,8 +4,12 @@ export type Score = {
   emotion: number;
 };
 
-export type ScoreResponse = {
-  input: string;
-  scores: Score;
-  labels: { [P in keyof Score]: 0 | 1 };
+export type Comment = {
+  time: string;
+  text: string;
+};
+
+export type ScoreComment = {
+  comment: Comment;
+  score: Score;
 };
