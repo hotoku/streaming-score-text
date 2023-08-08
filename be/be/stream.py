@@ -85,7 +85,8 @@ async def read_data(text_queue: asyncio.Queue[Comment]):
         LOGGER.info("put %s", obj)
         diff = row["diff"] - last_diff
         LOGGER.info("sleeping %s", diff)
-        await asyncio.sleep(diff)
+        # await asyncio.sleep(diff)
+        await asyncio.sleep(1)
         last_diff = row["diff"]
 
 

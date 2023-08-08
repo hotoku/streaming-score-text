@@ -48,11 +48,17 @@ async def websocket_endpoint(websocket: WebSocket):
                 event.set()
             elif message["type"] == "restart":
                 LOGGER.info("received restart signal. cancelling old task.")
-                # cancelled = send_task.cancel()
-                # LOGGER.info("cancelled %s", cancelled)
-                # st = stream()
-                # send_task = asyncio.create_task(
-                #     send_messages(websocket, st, event))
+                rd.cancel()
+                gs.cancel()
+                sm.cancel()
+
+                text_queue = asyncio.Queue[Comment]()
+                score_queue = asyncio.Queue[ScoreComment]()
+
+                rd = asyncio.create_task(read_data(text_queue))
+                gs = asyncio.create_task(get_score(text_queue, score_queue))
+                sm = asyncio.create_task(
+                    send_messages(websocket, event, score_queue))
             else:
                 LOGGER.warning("unknown message type:", message["type"])
 
